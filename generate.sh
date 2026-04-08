@@ -188,24 +188,42 @@ while [[ $# -gt 0 ]]; do
       shift
       for logo in "${@}"; do
         case "${logo}" in
-          default)
-            logoicon="Default"
+          list|--list-logos)
+            list_logos
+            exit 0
+            ;;
+          default|empty|none)
+            logoicon="Empty"
             shift
             ;;
           system)
-            logoicon="$(lsb_release -i | cut -d ' ' -f 2 | cut -d '	' -f 2)"
+            if ! command -v lsb_release &>/dev/null; then
+              install_lsb_release || prompt -w "Usando /etc/os-release como fallback...\n"
+            fi
+            distro=$(detect_distro)
+            logoicon=$(map_distro_to_logo "$distro")
+            prompt -i "Distribuição detectada: ${distro} -> logo: ${logoicon}\n"
             shift
             ;;
           -*)
             break
             ;;
           *)
-            prompt -e "ERROR: Unrecognized logo variant '$1'."
-            prompt -i "Try '$0 --help' for more information."
-            exit 1
+            if [[ -f "${REPO_DIR}/assets/assets-other/other-1080p/${logo}.png" ]]; then
+              logoicon="$logo"
+              shift
+            else
+              prompt -e "Logo '$logo' não encontrado."
+              prompt -i "Use './generate.sh --list-logos' para ver opções."
+              exit 1
+            fi
             ;;
         esac
       done
+      ;;
+    --list-logos)
+      list_logos
+      exit 0
       ;;
     -h|--help)
       usage

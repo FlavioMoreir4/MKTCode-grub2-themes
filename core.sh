@@ -4,7 +4,7 @@ readonly Project_Name="GRUB2_ELEGANT_THEMES"
 readonly MAX_DELAY=20                               # max delay for user to enter root password
 tui_root_login=
 
-THEME_NAME=Elegant
+THEME_NAME=MKTCode
 GRUB_DIR="/usr/share/grub/themes"
 REO_DIR="$(cd $(dirname $0) && pwd)"
 
@@ -21,6 +21,69 @@ sides=()
 colors=()
 
 logoicon="Empty"
+
+declare -A DISTRO_LOGO_MAP=(
+    ["Arch"]="Arch"
+    ["Archcraft"]="Archcraft"
+    ["Arcolinux"]="Arcolinux"
+    ["Artix"]="Artix"
+    ["Debian"]="Debian"
+    ["Deepin"]="Deepin"
+    ["Devuan"]="Devuan"
+    ["Elementary"]="Elementary"
+    ["Endeavouros"]="Endeavouros"
+    ["Fedora"]="Fedora"
+    ["Gentoo"]="Gentoo"
+    ["Haiku"]="Haiku"
+    ["Kali"]="Kali"
+    ["Kaos"]="Kaos"
+    ["Korora"]="Korora"
+    ["Kubuntu"]="Kubuntu"
+    ["Linuxmint"]="Linuxmint"
+    ["Lubuntu"]="Lubuntu"
+    ["Mageia"]="Mageia"
+    ["Manjaro"]="ManjaroLinux"
+    ["ManjaroLinux"]="ManjaroLinux"
+    ["Mx-linux"]="Mx-linux"
+    ["Neon"]="Neon"
+    ["Nixos"]="Nixos"
+    ["openSUSE"]="openSUSE"
+    ["Parrot"]="Parrot"
+    ["Pop-os"]="Pop-os"
+    ["Regolith"]="Regolith"
+    ["Siduction"]="Siduction"
+    ["Solus"]="Solus"
+    ["Ubuntu"]="Ubuntu"
+    ["UbuntuDDE"]="UbuntuDDE"
+    ["Void"]="Void"
+    ["Xubuntu"]="Xubuntu"
+    ["Zorin"]="Zorin"
+    ["4MLinux"]="4MLinux"
+    ["AlpineLinux"]="AlpineLinux"
+    ["Anonymous"]="Anonymous"
+    ["Antergos"]="Antergos"
+    ["Chakra"]="Chakra"
+    ["Chimera"]="Chimera"
+    ["Default"]="Default"
+    ["Empty"]="Empty"
+    ["Arch Linux"]="Arch"
+    ["Manjaro Linux"]="ManjaroLinux"
+    ["Linux Mint"]="Linuxmint"
+    ["Pop!_OS"]="Pop-os"
+    ["Pop"]="Pop-os"
+    ["MX Linux"]="Mx-linux"
+    ["KDE Neon"]="Neon"
+    ["EndeavourOS"]="Endeavouros"
+    ["Zorin OS"]="Zorin"
+    ["Elementary OS"]="Elementary"
+    ["Void Linux"]="Void"
+    ["Alpine Linux"]="AlpineLinux"
+    ["CentOS"]="Linuxmint"
+    ["Red Hat"]="Linuxmint"
+    ["Rocky Linux"]="Linuxmint"
+    ["AlmaLinux"]="Linuxmint"
+    ["Oracle Linux"]="Linuxmint"
+)
 
 #################################
 #   :::::: C O L O R S ::::::   #
@@ -40,6 +103,97 @@ b_CWAR=" \033[1;33m"                                # bold warning color
 #######################################
 #   :::::: F U N C T I O N S ::::::   #
 #######################################
+
+list_logos() {
+    echo ""
+    prompt -i "Logos disponíveis:"
+    echo ""
+    local logos=(
+        "Arch" "Archcraft" "Arcolinux" "Artix" "Debian" "Deepin"
+        "Devuan" "Elementary" "Endeavouros" "Fedora" "Gentoo" "Haiku"
+        "Kali" "Kaos" "Korora" "Kubuntu" "Linuxmint" "Lubuntu"
+        "Mageia" "ManjaroLinux" "Mx-linux" "Neon" "Nixos"
+        "openSUSE" "Parrot" "Pop-os" "Regolith" "Siduction" "Solus"
+        "Ubuntu" "UbuntuDDE" "Void" "Xubuntu" "Zorin"
+        "4MLinux" "AlpineLinux" "Anonymous" "Antergos" "Chakra"
+        "Chimera" "Default" "Empty"
+    )
+    
+    printf '%s\n' "${logos[@]}" | paste - - - - - - | sed 's/^/  /'
+    echo ""
+    echo "Use: ./install.sh -l <logo_name>"
+    echo ""
+}
+
+detect_distro() {
+    local distro=""
+    
+    if command -v lsb_release &>/dev/null; then
+        distro=$(lsb_release -i 2>/dev/null | cut -d: -f2 | tr -d ' \t')
+        [[ -n "$distro" ]] && echo "$distro" && return 0
+    fi
+    
+    if [[ -f /etc/os-release ]]; then
+        distro=$(grep -E "^ID=" /etc/os-release | head -1 | cut -d= -f2 | tr -d '"')
+        [[ -n "$distro" ]] && echo "$distro" && return 0
+    fi
+    
+    [[ -f /etc/debian_version ]] && echo "Debian" && return 0
+    [[ -f /etc/arch-release ]] && echo "Arch" && return 0
+    [[ -f /etc/fedora-release ]] && echo "Fedora" && return 0
+    [[ -f /etc/redhat-release ]] && echo "RedHat" && return 0
+    
+    return 1
+}
+
+map_distro_to_logo() {
+    local distro="$1"
+    
+    if [[ -n "${DISTRO_LOGO_MAP[$distro]}" ]]; then
+        echo "${DISTRO_LOGO_MAP[$distro]}"
+        return 0
+    fi
+    
+    local distro_lower="${distro,}"
+    for key in "${!DISTRO_LOGO_MAP[@]}"; do
+        if [[ "${key,}" == "$distro_lower" ]]; then
+            echo "${DISTRO_LOGO_MAP[$key]}"
+            return 0
+        fi
+    done
+    
+    echo "Default"
+    return 1
+}
+
+install_lsb_release() {
+    prompt -w "O comando 'lsb-release' não está instalado.\n"
+    
+    if [[ "${auto_install:-false}" == 'true' ]]; then
+        prompt -i "Instalando automaticamente...\n"
+    else
+        read -r -p "Deseja instalar agora? [s/N]: " answer
+        answer="${answer:-n}"
+        [[ "${answer,}" != 's' ]] && return 1
+    fi
+    
+    if command -v apt-get &>/dev/null; then
+        apt-get update && apt-get install -y lsb-release
+    elif command -v zypper &>/dev/null; then
+        zypper install -y lsb-release
+    elif command -v pacman &>/dev/null; then
+        pacman -S --noconfirm lsb-release
+    elif command -v dnf &>/dev/null; then
+        dnf install -y redhat-lsb-core || dnf install -y lsb
+    elif command -v yum &>/dev/null; then
+        yum install -y redhat-lsb-core || yum install -y lsb
+    else
+        prompt -e "Não foi possível detectar seu gerenciador de pacotes."
+        return 1
+    fi
+    
+    command -v lsb_release &>/dev/null
+}
 
 # echo like ... with flag type and display message colors
 prompt () {
@@ -350,14 +504,31 @@ run_dialog() {
      esac
 
     tui=$(dialog --backtitle ${Project_Name} \
-    --radiolist "Choose your Grub theme logo variant : " 15 40 5 \
-      1 "None" on \
+    --radiolist "Choose your Grub theme logo variant : " 18 45 8 \
+      1 "None (Empty)" on \
       2 "Default" off \
-      3 "System" off --output-fd 1 )
+      3 "System (auto-detect)" off \
+      4 "Ubuntu" off \
+      5 "Arch" off \
+      6 "Fedora" off \
+      7 "Debian" off \
+      8 "Manjaro" off --output-fd 1 )
       case "$tui" in
-        1) logoicon="Empty"       ;;
+        1) logoicon="Empty" ;;
         2) logoicon="Default" ;;
-        3) logoicon="$(lsb_release -i | cut -d ' ' -f 2 | cut -d '	' -f 2)" ;;
+        3)
+          if ! command -v lsb_release &>/dev/null; then
+            install_lsb_release || true
+          fi
+          local distro=$(detect_distro)
+          logoicon=$(map_distro_to_logo "$distro")
+          prompt -i "Distribuição detectada: ${distro} -> logo: ${logoicon}\n"
+          ;;
+        4) logoicon="Ubuntu" ;;
+        5) logoicon="Arch" ;;
+        6) logoicon="Fedora" ;;
+        7) logoicon="Debian" ;;
+        8) logoicon="ManjaroLinux" ;;
         *) operation_canceled ;;
      esac
 

@@ -9,8 +9,8 @@ Usage:  `./install.sh [OPTIONS...]`
   -i, --side      Picture display side        [left|right] (default is left)
   -c, --color     Background color variant(s) [dark|light] (default is dark)
   -s, --screen    Screen display variant(s)   [1080p|2k|4k] (default is 1080p)
-  -l, --logo      Show a logo on picture      [default|system] (default: a mountain logo)
-  -r, --remove    Remove/Uninstall theme      (must add theme options, default is Elegant-forest-window-left-dark)
+  -l, --logo      Show a logo on picture      [logo_name|system|list] (default: Empty)
+  -r, --remove    Remove/Uninstall theme      (must add theme options, default is MKTCode-forest-window-left-dark)
   -b, --boot      Install theme into '/boot/grub' or '/boot/grub2'
   -h, --help      Show this help
 ```

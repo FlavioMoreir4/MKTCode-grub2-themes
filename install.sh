@@ -17,8 +17,9 @@ OPTIONS:
   -i, --side      Picture display side        [left|right] (default is left)
   -c, --color     Background color variant(s) [dark|light] (default is dark)
   -s, --screen    Screen display variant(s)   [1080p|2k|4k] (default is 1080p)
-  -l, --logo      Show a logo on picture      [default|system] (default: a mountain logo)
-  -r, --remove    Remove/Uninstall theme      (must add theme options, default is Elegant-forest-window-left-dark)
+  -l, --logo      Show a logo on picture      [logo_name|system|list] (default: Empty)
+                   Use './install.sh --list-logos' to see all available logos
+  -r, --remove    Remove/Uninstall theme      (must add theme options, default is MKTCode-forest-window-left-dark)
   -b, --boot      Install theme into '/boot/grub' or '/boot/grub2'
   -h, --help      Show this help
 
@@ -185,24 +186,42 @@ while [[ $# -gt 0 ]]; do
       shift
       for logo in "${@}"; do
         case "${logo}" in
-          default)
-            logoicon="Default"
+          list|--list-logos)
+            list_logos
+            exit 0
+            ;;
+          default|empty|none)
+            logoicon="Empty"
             shift
             ;;
           system)
-            logoicon="$(lsb_release -i | cut -d ' ' -f 2 | cut -d '	' -f 2)"
+            if ! command -v lsb_release &>/dev/null; then
+              install_lsb_release || prompt -w "Usando /etc/os-release como fallback...\n"
+            fi
+            distro=$(detect_distro)
+            logoicon=$(map_distro_to_logo "$distro")
+            prompt -i "Distribuição detectada: ${distro} -> logo: ${logoicon}\n"
             shift
             ;;
           -*)
             break
             ;;
           *)
-            prompt -e "ERROR: Unrecognized logo variant '$1'."
-            prompt -i "Try '$0 --help' for more information."
-            exit 1
+            if [[ -f "${REPO_DIR}/assets/assets-other/other-1080p/${logo}.png" ]]; then
+              logoicon="$logo"
+              shift
+            else
+              prompt -e "Logo '$logo' não encontrado."
+              prompt -i "Use './install.sh --list-logos' para ver opções."
+              exit 1
+            fi
             ;;
         esac
       done
+      ;;
+    --list-logos)
+      list_logos
+      exit 0
       ;;
     -h|--help)
       usage
